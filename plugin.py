@@ -82,7 +82,6 @@ class BasePlugin:
                     Devices[hkaid].Update(nValue=0,sValue="Off")
 
     def onCommand(self, Unit, Command, Level, Hue):
-
         if str(Command) == "On":
             Devices[Unit].Update(nValue=1,sValue="On")
             nValue = "1"
@@ -93,9 +92,9 @@ class BasePlugin:
         aid = str( Unit )
         iid = str( Devices[Unit].DeviceID )
 
-        Domoticz.Log("onCommand called for Unit " + str(Unit) + ": Parameter '" + str(Command) + "', Level: " + str(Level))
+        Domoticz.Log("Command called for Unit " + str(Unit) + ": Parameter '" + str(Command) + "'")
         data = "{\"characteristics\":[{\"aid\":" + aid + ",\"iid\":" + iid + ",\"value\":" + nValue + "}]}"
-        Domoticz.Log(data)
+        #Domoticz.Log(data)
         self.httpConn.Send({'Verb':'PUT', 'URL':'/characteristics', 'Headers': self.headers, 'Data': data})
 
     def onNotification(self, Name, Subject, Text, Status, Priority, Sound, ImageFile):
