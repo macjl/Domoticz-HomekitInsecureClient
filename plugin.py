@@ -21,19 +21,13 @@ class BasePlugin:
     enabled = False
     httpConn = None
     headers = { 'Content-Type': 'Application/json'}
-    iid = 0
-               
 
     def __init__(self):
-        #self.var = 123
         return
 
     def onStart(self):
         Domoticz.Log("onStart called")
         Domoticz.Debugging(0)
-#        if (len(Devices) == 0):
-#            Domoticz.Device(Name="Socket 1", Unit=int(Parameters["Mode1"]), TypeName="Switch").Create()
-#            Domoticz.Log("Device created.")
         DumpConfigToLog()
         self.headers = { 'Content-Type': 'Application/json',
                 'Authorization': Parameters["Password"]}
@@ -56,7 +50,6 @@ class BasePlugin:
         Domoticz.Log("onMessage called")
         DumpHTTPResponseToLog(Data)
         strData = Data["Data"].decode("utf-8", "ignore")
-        #Domoticz.Log( strData )
         accessories = json.loads(strData)["accessories"]
         for accessory in accessories:
             hkaid = accessory["aid"]
@@ -74,7 +67,9 @@ class BasePlugin:
                             hkiid = str( characteristic["iid"] )
                             hkValue = characteristic["value"]
                             supported = 1
-            if ( supported == 1 and hkManufacturer != "eDomoticz" ):
+            if ( hkManufacturer == "eDomoticz" ):
+                supported = 0
+            if ( supported == 1 ):
                 Domoticz.Log( hkManufacturer + " - " + hkName + " - " + str( hkaid ) + " - " + hkiid + " - " + str (hkValue) )
                 try:
                     Devices[hkaid].Touch
@@ -86,9 +81,6 @@ class BasePlugin:
                 if ( hkValue == 0 ):
                     Devices[hkaid].Update(nValue=0,sValue="Off")
 
-
-
-
     def onCommand(self, Unit, Command, Level, Hue):
 
         if str(Command) == "On":
@@ -98,8 +90,11 @@ class BasePlugin:
             Devices[Unit].Update(nValue=0,sValue="Off")
             nValue = "0"
 
+        aid = str( Unit )
+        iid = str( Devices[Unit].DeviceID )
+
         Domoticz.Log("onCommand called for Unit " + str(Unit) + ": Parameter '" + str(Command) + "', Level: " + str(Level))
-        data = "{\"characteristics\":[{\"aid\":" + str(Unit) + ",\"iid\":" + self.iid + ",\"value\":" + nValue + "}]}"
+        data = "{\"characteristics\":[{\"aid\":" + aid + ",\"iid\":" + iid + ",\"value\":" + nValue + "}]}"
         Domoticz.Log(data)
         self.httpConn.Send({'Verb':'PUT', 'URL':'/characteristics', 'Headers': self.headers, 'Data': data})
 
