@@ -3,7 +3,7 @@
 # Author: MacJL
 #
 """
-<plugin key="HomekitInsecureClient" name="Homekit Insecure Mode Client" author="MacJL" version="0.1" wikilink="http://www.domoticz.com/wiki/plugins" externallink="https://github.com/macjl">
+<plugin key="HomekitInsecureClient" name="Homekit Insecure Client" author="MacJL" version="0.2" wikilink="http://www.domoticz.com/wiki/plugins" externallink="https://github.com/macjl/Domoticz-HomekitInsecureClient">
     <description>
         Control Homekit Devices which are set in insecure mode (eg : Homebridge, HAA, etc...)
     </description>
@@ -11,15 +11,11 @@
         <param field="Address" label="IP Address of homekit device or bridge" width="200px" required="true" default="127.0.0.1"/>
         <param field="Port" label="PORT of homekit device or bridge" width="50px" required="true" default="54821"/>
         <param field="Password" label="Authorization key" width="80px" required="true" default="031-45-154"/>
-        <param field="Mode1" label="aid" width="20px" required="true" default="1"/>
-        <param field="Mode2" label="iid" width="20px" required="true" default="10"/>
     </params>
 </plugin>
 """
 import Domoticz
 import json
-#from Domoticz import Devices, Parameters
-
 
 class BasePlugin:
     enabled = False
@@ -78,7 +74,7 @@ class BasePlugin:
                             hkiid = str( characteristic["iid"] )
                             hkValue = characteristic["value"]
                             supported = 1
-            if ( supported == 1 ):
+            if ( supported == 1 and hkManufacturer != "eDomoticz" ):
                 Domoticz.Log( hkManufacturer + " - " + hkName + " - " + str( hkaid ) + " - " + hkiid + " - " + str (hkValue) )
                 try:
                     Devices[hkaid].Touch
