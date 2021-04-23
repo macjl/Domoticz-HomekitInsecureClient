@@ -82,20 +82,21 @@ class BasePlugin:
                     Devices[hkaid].Update(nValue=0,sValue="Off")
 
     def onCommand(self, Unit, Command, Level, Hue):
-        if str(Command) == "On":
-            Devices[Unit].Update(nValue=1,sValue="On")
-            nValue = "1"
-        if str(Command) == "Off":
-            Devices[Unit].Update(nValue=0,sValue="Off")
-            nValue = "0"
+        if ( Devices[Unit].sValue != Command ):
+            if str(Command) == "On":
+                Devices[Unit].Update(nValue=1,sValue="On")
+                nValue = "1"
+            if str(Command) == "Off":
+                Devices[Unit].Update(nValue=0,sValue="Off")
+                nValue = "0"
 
-        aid = str( Unit )
-        iid = str( Devices[Unit].DeviceID )
+            aid = str( Unit )
+            iid = str( Devices[Unit].DeviceID )
 
-        Domoticz.Log("Command called for Unit " + str(Unit) + ": Parameter '" + str(Command) + "'")
-        data = "{\"characteristics\":[{\"aid\":" + aid + ",\"iid\":" + iid + ",\"value\":" + nValue + "}]}"
-        #Domoticz.Log(data)
-        self.httpConn.Send({'Verb':'PUT', 'URL':'/characteristics', 'Headers': self.headers, 'Data': data})
+            Domoticz.Log("Command called for Unit " + str(Unit) + ": Parameter '" + str(Command) + "'")
+            data = "{\"characteristics\":[{\"aid\":" + aid + ",\"iid\":" + iid + ",\"value\":" + nValue + "}]}"
+            #Domoticz.Log(data)
+            self.httpConn.Send({'Verb':'PUT', 'URL':'/characteristics', 'Headers': self.headers, 'Data': data})
 
     def onNotification(self, Name, Subject, Text, Status, Priority, Sound, ImageFile):
         Domoticz.Log("Notification: " + Name + "," + Subject + "," + Text + "," + Status + "," + str(Priority) + "," + Sound + "," + ImageFile)
