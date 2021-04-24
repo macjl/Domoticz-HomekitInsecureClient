@@ -4,3 +4,7 @@ Domoticz plugin to connect to an Homkit device or bridge in Insecure Mode (Homeb
 
 Supported devices :
   - Smart Plug
+
+Todo :
+ - handle general switch
+ - fix disconnect/reconnect
