@@ -106,6 +106,12 @@ class BasePlugin:
 
     def onHeartbeat(self):
         Domoticz.Log("onHeartbeat called")
+        if (self.httpConn != None and (self.httpConn.Connecting() or self.httpConn.Connected())):
+            Domoticz.Debug("Connection is alive.")
+        else:
+            Domoticz.Debug("Connection Lost. Reconnecting.")
+            self.httpConn.Connect()
+
         self.httpConn.Send({'Verb':'GET', 'URL':'/accessories', 'Headers': self.headers})
 
 global _plugin
