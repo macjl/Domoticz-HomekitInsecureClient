@@ -3,14 +3,14 @@
 # Author: MacJL
 #
 """
-<plugin key="HomekitInsecureClient" name="Homekit Insecure Client" author="MacJL" version="0.2" wikilink="http://www.domoticz.com/wiki/plugins" externallink="https://github.com/macjl/Domoticz-HomekitInsecureClient">
+<plugin key="HomekitInsecureClient" name="Homekit Insecure Client" author="MacJL" version="0.8" wikilink="http://www.domoticz.com/wiki/plugins" externallink="https://github.com/macjl/Domoticz-HomekitInsecureClient">
     <description>
         Control Homekit Devices which are set in insecure mode (eg : Homebridge, HAA, etc...)
     </description>
     <params>
         <param field="Address" label="IP Address of homekit device or bridge" width="200px" required="true" default="127.0.0.1"/>
         <param field="Port" label="PORT of homekit device or bridge" width="50px" required="true" default="54821"/>
-        <param field="Password" label="Authorization key" width="80px" required="true" default="031-45-154"/>
+        <param field="Password" label="Authorization key" width="80px" required="true" default="031-45-154" password="true"/>
         <param field="Mode6" label="Debug" width="150px">
             <options>
                 <option label="None" value="0"  default="true" />
@@ -26,7 +26,8 @@ import json, time
 
 class BasePlugin:
     enabled = False
-    httpConn = None
+    httpConnGet = None
+    httpConnPut = None
     headers = { 'Content-Type': 'Application/json'}
 
     def __init__(self):
@@ -41,17 +42,19 @@ class BasePlugin:
 
         Domoticz.Debug("Creating Connection object")
         self.headers = { 'Content-Type': 'Application/json', 'Authorization': Parameters["Password"] }
-        self.httpConn = Domoticz.Connection(Name="Homekit", Transport="TCP/IP", Protocol="HTTP", Address=Parameters["Address"], Port=Parameters["Port"])
+        self.httpConnGet = Domoticz.Connection(Name="httpGET", Transport="TCP/IP", Protocol="HTTP", Address=Parameters["Address"], Port=Parameters["Port"])
+        self.httpConnPut = Domoticz.Connection(Name="httpPUT", Transport="TCP/IP", Protocol="HTTP", Address=Parameters["Address"], Port=Parameters["Port"])
 
         Domoticz.Log("Connecting to Homekit Device at address http://" + Parameters["Address"] + ":" + Parameters["Port"] )
-        self.httpConn.Connect()
+        self.httpConnGet.Connect()
+        self.httpConnPut.Connect()
 
     def onStop(self):
         Domoticz.Log("onStop called")
 
     def onConnect(self, Connection, Status, Description):
         if (Status == 0):
-            Domoticz.Log("Connection successfull")
+            Domoticz.Debug("Connection successfull")
         else:
             Domoticz.Error("Failed to connect ("+str(Status)+") to: "+Parameters["Address"]+":"+Parameters["Port"]+" with error: "+Description)
 
@@ -91,17 +94,22 @@ class BasePlugin:
                                 hkValue = characteristic["value"]
                         deviceID = service["type"] + "-" + str( hkaid ) + "-" + str( hkiid )
                         domoticzID = GetIDFromDevID( deviceID )
-                        Domoticz.Log( hkManufacturer + " : " + hkName + " - DeviceID=" + deviceID + " - DomoticzID=" + str( domoticzID ) + " - Current Value=" + str (hkValue) )
+                        Domoticz.Debug( hkManufacturer + " : " + hkName + " - DeviceID=" + deviceID + " - DomoticzID=" + str( domoticzID ) + " - Current Value=" + str (hkValue) )
 
                         if ( domoticzID == -1 ):
                             Domoticz.Debug("Create domoticz device :\"" + hkName + "\" with ID=" + str( len(Devices) + 1 ) + " and DeviceID=" + deviceID + " of type Switch")
                             Domoticz.Device(Name=hkName, Unit=len(Devices) + 1, TypeName="Switch", DeviceID=deviceID ).Create()
                             domoticzID = GetIDFromDevID( deviceID )
-                            Domoticz.Log("Device created.")
-                        if ( hkValue == 1 ):
-                            Devices[domoticzID].Update(nValue=1,sValue="On")
-                        if ( hkValue == 0 ):
-                            Devices[domoticzID].Update(nValue=0,sValue="Off")
+                            Domoticz.Log("Device created: " + hkName + " - DeviceID=" + deviceID )
+                        if ( hkValue != Devices[domoticzID].nValue ):
+                            if ( hkValue == 1 ):
+                                Domoticz.Log("Set ON  to Device " + hkName + " - DeviceID=" + deviceID + " - DomoticzID=" + str( domoticzID ) )
+                                Devices[domoticzID].Update(nValue=1,sValue="On")
+                            elif ( hkValue == 0 ):
+                                Domoticz.Log("Set OFF to Device " + hkName + " - DeviceID=" + deviceID + " - DomoticzID=" + str( domoticzID ) )
+                                Devices[domoticzID].Update(nValue=0,sValue="Off")
+                            else:
+                                Domoticz.Error("Invalid Homekit Data")
                     elif( service["type"] == "3E"):
                         pass
                     else:
@@ -123,25 +131,35 @@ class BasePlugin:
             Domoticz.Log("Command called for Unit=" + str(Unit) + " and DeviceID=" + Devices[Unit].DeviceID + ": Parameter '" + str(Command) + "'")
             data = "{\"characteristics\":[{\"aid\":" + aid + ",\"iid\":" + iid + ",\"value\":" + nValue + "}]}"
             Domoticz.Debug(data)
-            self.httpConn.Send({'Verb':'PUT', 'URL':'/characteristics', 'Headers': self.headers, 'Data': data})
+
+            self.httpConnPut.Send({'Verb':'PUT', 'URL':'/characteristics', 'Headers': self.headers, 'Data': data})
             onHeartbeat()
 
     def onNotification(self, Name, Subject, Text, Status, Priority, Sound, ImageFile):
         Domoticz.Log("Notification: " + Name + "," + Subject + "," + Text + "," + Status + "," + str(Priority) + "," + Sound + "," + ImageFile)
 
     def onDisconnect(self, Connection):
-        Domoticz.Log("Reconnecting")
-        time.sleep(10)
-        self.httpConn.Connect()
+        Domoticz.Debug("Connection " + Connection.Name + " disconnected")
 
     def onHeartbeat(self):
         Domoticz.Debug("Refreshing Accessories Status")
-        if (self.httpConn != None and ( self.httpConn.Connected() )):
+        if (self.httpConnGet != None and ( self.httpConnGet.Connected() )):
             Domoticz.Debug("Connection is alive.")
-            self.httpConn.Send({'Verb':'GET', 'URL':'/accessories', 'Headers': self.headers})
+            self.httpConnGet.Send({'Verb':'GET', 'URL':'/accessories', 'Headers': self.headers})
         else:
-            Domoticz.Error("Connection Lost. Reconnecting.")
-            self.httpConn.Disconnect()
+            Domoticz.Log("Connection Lost. Reconnecting.")
+            self.httpConnGet.Disconnect()
+            time.sleep(5)
+            self.httpConnGet.Connect()
+
+        if (self.httpConnPut != None and ( self.httpConnPut.Connected() )):
+            Domoticz.Debug("Connection is alive.")
+        else:
+            Domoticz.Log("Connection Lost. Reconnecting.")
+            self.httpConnPut.Disconnect()
+            time.sleep(5)
+            self.httpConnPut.Connect()
+            time.sleep(5)
 
 global _plugin
 _plugin = BasePlugin()
