@@ -15,5 +15,8 @@ Domoticz plugin to connect to an Homkit device or bridge in Insecure Mode (Homeb
 - Make sure the Homekit device you want to control allow 'Insecure' connections ([Homebridge](https://github.com/oznu/homebridge-config-ui-x/wiki/Enabling-Accessory-Control), [HAA](https://github.com/RavenSystem/esp-homekit-devices/wiki/General-Configuration#Enable-HomeKit-rest-API))
 - Go to Hardware Configuration in Domoticz
 - Add an Hardware with type "Homekit Insecure Client"
-- Configure the plugin with the IP Address of the bridge, Port, and Authorization key (format : xxx-xx-xxx)
+- Configure the plugin with the IP Address of the bridge, Port, and Authorization key (format : *xxx-xx-xxx*)
 - The devices should appear in Unused Devices after 1 minute
+
+## Is my device supported?
+- You can show more informations by enabling "Plugin Debug" in Debug menu. It will show discoverd devices that are not supported yet. You can open an issue in Github with this logs, and I'll see if I can support it.
