@@ -75,23 +75,30 @@ class BasePlugin:
         for accessory in accessories:
             hkaid = accessory["aid"]
             supported = 0
-            # Find if accessory is provided by eDomoticz
+            hkName="No Name"
+            # Find if accessory is provided by eDomoticz and global name
             for service in accessory["services"]:
                 if( service["type"] == "3E" ):
+                    Domoticz.Debug(str( service["characteristics"] ) )
                     for characteristic in service["characteristics"]:
                         if ( characteristic["type"] == "20" ):
                             hkManufacturer = characteristic["value"]
+                        if ( characteristic["type"] == "23" ):
+                            hkName = characteristic["value"]
             # If accessory is not provided by eDomoticz
             if ( hkManufacturer != "eDomoticz" ):
                 for service in accessory["services"]:
                     # Service of type Smart Plug
                     if( service["type"] == "47" or service["type"] == "49" ):
+                        Domoticz.Debug(str( service["characteristics"] ) )
                         for characteristic in service["characteristics"]:
                             if ( characteristic["type"] == "23" ):
                                 hkName = characteristic["value"]
                             if ( characteristic["type"] == "25" ):
                                 hkiid = characteristic["iid"]
                                 hkValue = characteristic["value"]
+                                if ( hkValue == True ): hkValue = 1
+                                if ( hkValue == False ): hkValue = 0
                         deviceID = service["type"] + "-" + str( hkaid ) + "-" + str( hkiid )
                         domoticzID = GetIDFromDevID( deviceID )
                         Domoticz.Debug( hkManufacturer + " : " + hkName + " - DeviceID=" + deviceID + " - DomoticzID=" + str( domoticzID ) + " - Current Value=" + str (hkValue) )
@@ -216,6 +223,7 @@ def DumpConfigToLog():
         Domoticz.Debug("Device nValue:    " + str(Devices[x].nValue))
         Domoticz.Debug("Device sValue:   '" + Devices[x].sValue + "'")
         Domoticz.Debug("Device LastLevel: " + str(Devices[x].LastLevel))
+        Domoticz.Debug("Device DeviceID : " + str(Devices[x].DeviceID))
     return
 
 def DumpHTTPResponseToLog(httpResp, level=0):
