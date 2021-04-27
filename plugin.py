@@ -3,7 +3,7 @@
 # Author: MacJL
 #
 """
-<plugin key="HomekitInsecureClient" name="Homekit Insecure Client" author="MacJL" version="0.8" wikilink="http://www.domoticz.com/wiki/plugins" externallink="https://github.com/macjl/Domoticz-HomekitInsecureClient">
+<plugin key="HomekitInsecureClient" name="Homekit Insecure Client" author="MacJL" version="0.9" wikilink="http://www.domoticz.com/wiki/plugins" externallink="https://github.com/macjl/Domoticz-HomekitInsecureClient">
     <description>
         Control Homekit Devices which are set in insecure mode (eg : Homebridge, HAA, etc...)
     </description>
