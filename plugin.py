@@ -3,7 +3,7 @@
 # Author: MacJL
 #
 """
-<plugin key="HomekitInsecureClient" name="Homekit Insecure Client" author="MacJL" version="1.0" wikilink="http://www.domoticz.com/wiki/plugins" externallink="https://github.com/macjl/Domoticz-HomekitInsecureClient">
+<plugin key="HomekitInsecureClient" name="Homekit Insecure Client" author="MacJL" version="1.1" wikilink="http://www.domoticz.com/wiki/plugins" externallink="https://github.com/macjl/Domoticz-HomekitInsecureClient">
     <description>
         Control Homekit Devices which are set in insecure mode (eg : Homebridge, HAA, etc...)
     </description>
@@ -155,18 +155,13 @@ class BasePlugin:
             self.httpConnGet.Send({'Verb':'GET', 'URL':'/accessories', 'Headers': self.headers})
         else:
             Domoticz.Log("Connection Lost. Reconnecting.")
-            self.httpConnGet.Disconnect()
-            time.sleep(5)
             self.httpConnGet.Connect()
 
         if (self.httpConnPut != None and ( self.httpConnPut.Connected() )):
             Domoticz.Debug("Connection is alive.")
         else:
             Domoticz.Log("Connection Lost. Reconnecting.")
-            self.httpConnPut.Disconnect()
-            time.sleep(5)
             self.httpConnPut.Connect()
-            time.sleep(5)
 
 global _plugin
 _plugin = BasePlugin()
