@@ -22,7 +22,7 @@
 </plugin>
 """
 import Domoticz
-import json, time
+import json
 
 class BasePlugin:
     enabled = False
