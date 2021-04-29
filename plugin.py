@@ -60,14 +60,18 @@ class BasePlugin:
 
     def onMessage(self, Connection, Data):
         Domoticz.Debug("Data received")
-
-        Status = int(Data["Status"])
-
-        if (Status != 200 and Status != 204):
-            Domoticz.Error("Invalid Data received. Status=" + str( Status) )
+        
+        try:
+            Status = int(Data["Status"])
+        except:
+            Domoticz.Error("Invalid Data : No status")
             return
-        elif (Status == 204):
+
+        if (Status == 204):
             Domoticz.Debug( "Command sent")
+            return
+        elif (Status != 200):
+            Domoticz.Error("Invalid Data received. Status=" + str( Status) )
             return
 
         # Get Accessories as a dict variable
