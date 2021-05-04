@@ -3,7 +3,7 @@
 # Author: MacJL
 #
 """
-<plugin key="HomekitInsecureClient" name="Homekit Insecure Client" author="MacJL" version="1.2" wikilink="http://www.domoticz.com/wiki/plugins" externallink="https://github.com/macjl/Domoticz-HomekitInsecureClient">
+<plugin key="HomekitInsecureClient" name="Homekit Insecure Client" author="MacJL" version="1.3" wikilink="http://www.domoticz.com/wiki/plugins" externallink="https://github.com/macjl/Domoticz-HomekitInsecureClient">
     <description>
         Control Homekit Devices which are set in insecure mode (eg : Homebridge, HAA, etc...)
     </description>
@@ -27,7 +27,8 @@ import json
 class BasePlugin:
     enabled = False
     httpConnGet = None
-    httpConnPut = None
+    Timeout = 60000
+    GetSent = 0
     headers = { 'Content-Type': 'Application/json'}
 
     def __init__(self):
@@ -43,13 +44,12 @@ class BasePlugin:
         Domoticz.Debug("Creating Connection object")
         self.headers = { 'Content-Type': 'Application/json', 'Authorization': Parameters["Password"] }
         self.httpConnGet = Domoticz.Connection(Name="httpGET", Transport="TCP/IP", Protocol="HTTP", Address=Parameters["Address"], Port=Parameters["Port"])
-        self.httpConnPut = Domoticz.Connection(Name="httpPUT", Transport="TCP/IP", Protocol="HTTP", Address=Parameters["Address"], Port=Parameters["Port"])
 
         Domoticz.Log("Connecting to Homekit Device at address http://" + Parameters["Address"] + ":" + Parameters["Port"] )
-        self.httpConnGet.Connect()
-        self.httpConnPut.Connect()
+        self.httpConnGet.Connect(Timeout=self.Timeout)
 
     def onStop(self):
+        self.httpConnGet.Disconnect()
         Domoticz.Log("onStop called")
 
     def onConnect(self, Connection, Status, Description):
@@ -58,6 +58,10 @@ class BasePlugin:
         else:
             Domoticz.Error("Failed to connect ("+str(Status)+") to: "+Parameters["Address"]+":"+Parameters["Port"]+" with error: "+Description)
 
+    def onTimeout(self, Connection):
+        Domoticz.Log("Timeout on Connection")
+        Connection.Disconnect()
+
     def onMessage(self, Connection, Data):
         Domoticz.Debug("Data received")
         
@@ -65,6 +69,7 @@ class BasePlugin:
             Status = int(Data["Status"])
         except:
             Domoticz.Error("Invalid Data : No status")
+            Connection.Disconnect()
             return
 
         if (Status == 204):
@@ -72,9 +77,11 @@ class BasePlugin:
             return
         elif (Status != 200):
             Domoticz.Error("Invalid Data received. Status=" + str( Status) )
+            Connection.Disconnect()
             return
 
         # Get Accessories as a dict variable
+        self.GetSent=0
         accessories = json.loads( Data["Data"].decode("utf-8", "ignore") )["accessories"]
         for accessory in accessories:
             hkaid = accessory["aid"]
@@ -143,29 +150,31 @@ class BasePlugin:
             data = "{\"characteristics\":[{\"aid\":" + aid + ",\"iid\":" + iid + ",\"value\":" + nValue + "}]}"
             Domoticz.Debug(data)
 
-            self.httpConnPut.Send({'Verb':'PUT', 'URL':'/characteristics', 'Headers': self.headers, 'Data': data})
-            onHeartbeat()
+            try:
+                self.httpConnGet.Send({'Verb':'PUT', 'URL':'/characteristics', 'Headers': self.headers, 'Data': data})
+            except:
+                Domoticz.Error("Problem sending command to accessory : " + data)
 
     def onNotification(self, Name, Subject, Text, Status, Priority, Sound, ImageFile):
         Domoticz.Log("Notification: " + Name + "," + Subject + "," + Text + "," + Status + "," + str(Priority) + "," + Sound + "," + ImageFile)
 
     def onDisconnect(self, Connection):
         Domoticz.Debug("Connection " + Connection.Name + " disconnected")
+        self.GetSent=0
 
     def onHeartbeat(self):
         Domoticz.Debug("Refreshing Accessories Status")
-        if (self.httpConnGet != None and ( self.httpConnGet.Connected() )):
-            Domoticz.Debug("Connection is alive.")
+        if ( self.GetSent == 1 ):
+            Domoticz.Debug("No Data received since last heartbeat. Disconnecting")
+            self.httpConnGet.Disconnect()
+            self.GetSent=0
+        elif (self.httpConnGet != None and ( self.httpConnGet.Connected() )):
+            Domoticz.Debug("Connection is alive. Sending /accessories command")
             self.httpConnGet.Send({'Verb':'GET', 'URL':'/accessories', 'Headers': self.headers})
+            self.GetSent=1
         else:
             Domoticz.Log("Connection Lost. Reconnecting.")
-            self.httpConnGet.Connect()
-
-        if (self.httpConnPut != None and ( self.httpConnPut.Connected() )):
-            Domoticz.Debug("Connection is alive.")
-        else:
-            Domoticz.Log("Connection Lost. Reconnecting.")
-            self.httpConnPut.Connect()
+            self.httpConnGet.Connect(Timeout=self.Timeout)
 
 global _plugin
 _plugin = BasePlugin()
@@ -181,6 +190,10 @@ def onStop():
 def onConnect(Connection, Status, Description):
     global _plugin
     _plugin.onConnect(Connection, Status, Description)
+
+def onTimeout(Connection):
+    global _plugin
+    _plugin.onTimeout(Connection)
 
 def onMessage(Connection, Data):
     global _plugin
