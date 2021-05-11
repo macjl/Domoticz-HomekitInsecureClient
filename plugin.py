@@ -3,7 +3,7 @@
 # Author: MacJL
 #
 """
-<plugin key="HomekitInsecureClient" name="Homekit Insecure Client" author="MacJL" version="1.3" wikilink="http://www.domoticz.com/wiki/plugins" externallink="https://github.com/macjl/Domoticz-HomekitInsecureClient">
+<plugin key="HomekitInsecureClient" name="Homekit Insecure Client" author="MacJL" version="1.4" wikilink="http://www.domoticz.com/wiki/plugins" externallink="https://github.com/macjl/Domoticz-HomekitInsecureClient">
     <description>
         Control Homekit Devices which are set in insecure mode (eg : Homebridge, HAA, etc...)
     </description>
@@ -112,19 +112,21 @@ class BasePlugin:
                                 if ( hkValue == False ): hkValue = 0
                         deviceID = service["type"] + "-" + str( hkaid ) + "-" + str( hkiid )
                         domoticzID = GetIDFromDevID( deviceID )
-                        Domoticz.Debug( hkManufacturer + " : " + hkName + " - DeviceID=" + deviceID + " - DomoticzID=" + str( domoticzID ) + " - Current Value=" + str (hkValue) )
+                        IDX = Devices[domoticzID].ID
+                        Domoticz.Debug( hkManufacturer + " : " + hkName + " - IDX=" + str( IDX ) + " - DeviceID=" + deviceID + " - DomoticzID=" + str( domoticzID ) + " - Current Value=" + str (hkValue) )
 
                         if ( domoticzID == -1 ):
                             Domoticz.Debug("Create domoticz device :\"" + hkName + "\" with ID=" + str( len(Devices) + 1 ) + " and DeviceID=" + deviceID + " of type Switch")
                             Domoticz.Device(Name=hkName, Unit=len(Devices) + 1, TypeName="Switch", DeviceID=deviceID ).Create()
+                            IDX = Devices[domoticzID].ID
                             domoticzID = GetIDFromDevID( deviceID )
                             Domoticz.Log("Device created: " + hkName + " - DeviceID=" + deviceID )
                         if ( hkValue != Devices[domoticzID].nValue ):
                             if ( hkValue == 1 ):
-                                Domoticz.Log("Set ON  to Device " + hkName + " - DeviceID=" + deviceID + " - DomoticzID=" + str( domoticzID ) )
+                                Domoticz.Log("Set ON  to Device " + hkName + " - IDX=" + str( IDX ) + " - DeviceID=" + deviceID + " - DomoticzID=" + str( domoticzID ) )
                                 Devices[domoticzID].Update(nValue=1,sValue="On")
                             elif ( hkValue == 0 ):
-                                Domoticz.Log("Set OFF to Device " + hkName + " - DeviceID=" + deviceID + " - DomoticzID=" + str( domoticzID ) )
+                                Domoticz.Log("Set OFF to Device " + hkName + " - IDX=" + str( IDX ) + " - DeviceID=" + deviceID + " - DomoticzID=" + str( domoticzID ) )
                                 Devices[domoticzID].Update(nValue=0,sValue="Off")
                             else:
                                 Domoticz.Error("Invalid Homekit Data")
