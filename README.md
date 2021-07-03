@@ -5,6 +5,7 @@ Domoticz plugin to connect to an Homkit device or bridge in Insecure Mode (Homeb
 ## Supported devices :
   - Switch Devices
   - Smart Plugs
+  - Sprinkler, valves
 
 ## Installation
 - Go to your plugins folder in domoticz
