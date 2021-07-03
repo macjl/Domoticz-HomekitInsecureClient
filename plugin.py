@@ -3,7 +3,7 @@
 # Author: MacJL
 #
 """
-<plugin key="HomekitInsecureClient" name="Homekit Insecure Client" author="MacJL" version="1.4" wikilink="http://www.domoticz.com/wiki/plugins" externallink="https://github.com/macjl/Domoticz-HomekitInsecureClient">
+<plugin key="HomekitInsecureClient" name="Homekit Insecure Client" author="MacJL" version="2.0" wikilink="http://www.domoticz.com/wiki/plugins" externallink="https://github.com/macjl/Domoticz-HomekitInsecureClient">
     <description>
         Control Homekit Devices which are set in insecure mode (eg : Homebridge, HAA, etc...)
     </description>
@@ -100,27 +100,27 @@ class BasePlugin:
             if ( hkManufacturer != "eDomoticz" ):
                 for service in accessory["services"]:
                     # Service of type Smart Plug
-                    if( service["type"] == "47" or service["type"] == "49" ):
-                        #Domoticz.Debug(str( service["characteristics"] ) )
+                    if( service["type"] == "47" or service["type"] == "49" or service["type"] == "D0" ):
+                        Domoticz.Debug(str( service["characteristics"] ) )
+                        hkName="NoName"
                         for characteristic in service["characteristics"]:
                             if ( characteristic["type"] == "23" ):
                                 hkName = characteristic["value"]
-                            if ( characteristic["type"] == "25" ):
+                            if ( characteristic["type"] == "25" or characteristic["type"] == "B0" ):
                                 hkiid = characteristic["iid"]
                                 hkValue = characteristic["value"]
                                 if ( hkValue == True ): hkValue = 1
                                 if ( hkValue == False ): hkValue = 0
                         deviceID = service["type"] + "-" + str( hkaid ) + "-" + str( hkiid )
                         domoticzID = GetIDFromDevID( deviceID )
-                        IDX = Devices[domoticzID].ID
-                        Domoticz.Debug( hkManufacturer + " : " + hkName + " - IDX=" + str( IDX ) + " - DeviceID=" + deviceID + " - DomoticzID=" + str( domoticzID ) + " - Current Value=" + str (hkValue) )
+                        Domoticz.Debug( hkManufacturer + " : " + hkName + " - DeviceID=" + deviceID + " - DomoticzID=" + str( domoticzID ) + " - Current Value=" + str (hkValue) )
 
                         if ( domoticzID == -1 ):
                             Domoticz.Debug("Create domoticz device :\"" + hkName + "\" with ID=" + str( len(Devices) + 1 ) + " and DeviceID=" + deviceID + " of type Switch")
                             Domoticz.Device(Name=hkName, Unit=len(Devices) + 1, TypeName="Switch", DeviceID=deviceID ).Create()
-                            IDX = Devices[domoticzID].ID
                             domoticzID = GetIDFromDevID( deviceID )
                             Domoticz.Log("Device created: " + hkName + " - DeviceID=" + deviceID )
+                        IDX = Devices[domoticzID].ID
                         if ( hkValue != Devices[domoticzID].nValue ):
                             if ( hkValue == 1 ):
                                 Domoticz.Log("Set ON  to Device " + hkName + " - IDX=" + str( IDX ) + " - DeviceID=" + deviceID + " - DomoticzID=" + str( domoticzID ) )
