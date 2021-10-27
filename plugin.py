@@ -3,7 +3,7 @@
 # Author: MacJL
 #
 """
-<plugin key="HomekitInsecureClient" name="Homekit Insecure Client" author="MacJL" version="2.0" wikilink="http://www.domoticz.com/wiki/plugins" externallink="https://github.com/macjl/Domoticz-HomekitInsecureClient">
+<plugin key="HomekitInsecureClient" name="Homekit Insecure Client" author="MacJL" version="2.1" wikilink="http://www.domoticz.com/wiki/plugins" externallink="https://github.com/macjl/Domoticz-HomekitInsecureClient">
     <description>
         Control Homekit Devices which are set in insecure mode (eg : Homebridge, HAA, etc...)
     </description>
@@ -82,6 +82,7 @@ class BasePlugin:
 
         # Get Accessories as a dict variable
         self.GetSent=0
+        Domoticz.Debug( Data["Data"].decode("utf-8", "ignore") )
         accessories = json.loads( Data["Data"].decode("utf-8", "ignore") )["accessories"]
         for accessory in accessories:
             hkaid = accessory["aid"]
