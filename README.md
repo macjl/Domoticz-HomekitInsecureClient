@@ -17,6 +17,7 @@ Domoticz plugin to connect to an Homkit device or bridge in Insecure Mode (Homeb
 - Go to Hardware Configuration in Domoticz
 - Add an Hardware with type "Homekit Insecure Client"
 - Configure the plugin with the IP Address of the bridge, Port, and Authorization key (format : *xxx-xx-xxx*)
+  > **_Note for homebridge users : you have to use the Homekit port you will find in config.json, not the port of the interface (homebridge-ui)_**
 - The devices should appear in Unused Devices after 1 minute
 
 ## Is my device supported?
